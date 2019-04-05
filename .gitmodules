@@ -1,0 +1,4 @@
+[submodule "work/Paper"]
+	path = work/Paper
+	url = https://github.com/yesdog/Paper.git
+	branch = master
