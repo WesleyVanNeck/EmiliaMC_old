@@ -83,7 +83,7 @@ import org.bukkit.craftbukkit.util.Versioning;
 import org.bukkit.craftbukkit.util.permissions.CraftDefaultPermissions;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.command.UnknownCommandEvent; // akarin
+import org.bukkit.event.command.UnknownCommandEvent; // Paper
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerChatTabCompleteEvent;
 import org.bukkit.event.server.BroadcastMessageEvent;
@@ -170,7 +170,7 @@ import javax.annotation.Nonnull; // Paper
 
 
 public final class CraftServer implements Server {
-    private final String serverName = org.apache.commons.lang3.StringUtils.isBlank(io.akarin.server.core.AkarinGlobalConfig.serverBrandName) ? "EmiliaMC" : io.akarin.server.core.AkarinGlobalConfig.serverBrandName; // Paper // Akarin - configurable brand name
+    private final String serverName = org.apache.commons.lang3.StringUtils.isBlank(io.akarin.server.core.AkarinGlobalConfig.serverBrandName) ? "Akarin" : io.akarin.server.core.AkarinGlobalConfig.serverBrandName; // Paper // Akarin - configurable brand name
     private final String serverVersion;
     private final String bukkitVersion = Versioning.getBukkitVersion();
     private final Logger logger = Logger.getLogger("Minecraft");
