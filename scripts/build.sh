@@ -44,7 +44,6 @@ echo "[Akarin] Ready to build"
 		\cp -rf "$basedir/src/api/pom.xml" "$paperbasedir/Paper-API/"
 		\cp -rf "$basedir/src" "$paperbasedir/Paper-Server/"
 		\cp -rf "$basedir/pom.xml" "$paperbasedir/Paper-Server/"
-		mvn clean install 
 		mvn clean install -DskipTests -X
 	fi
 	
