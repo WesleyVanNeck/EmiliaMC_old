@@ -36,7 +36,7 @@ jobs:
         paths:
         - ~/.m2
     # Test
-    - run: yes|cp -rf ./EmiliaMC-*.jar $CIRCLE_ARTIFACTS
+    - run: yes|cp -rf ./akarin-*.jar $CIRCLE_ARTIFACTS
     # Teardown
     # Save test results
     - store_test_results:
