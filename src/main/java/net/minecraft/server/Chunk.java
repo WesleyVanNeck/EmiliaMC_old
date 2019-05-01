@@ -13,6 +13,7 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 
 import io.akarin.server.core.AkarinAsyncExecutor;
+import io.akarin.server.core.AkarinCreatureSpanwner;
 import io.akarin.server.core.AkarinGlobalConfig;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -75,7 +76,6 @@ public class Chunk implements IChunkAccess {
     private int D;
     private final AtomicInteger E;
     private final ChunkCoordIntPair F;
-    public final int[] creatureCounts = new int[EnumCreatureType.values().length]; // Akarin
 
     // CraftBukkit start - Neighbor loaded cache for chunk lighting and entity ticking
     private volatile int neighbors = 0x1 << 12; // Akarin - volatile
@@ -768,7 +768,7 @@ public class Chunk implements IChunkAccess {
         } else if (entity instanceof IAnimal) {
             for (EnumCreatureType type : EnumCreatureType.values())
                 if (type.matches(entity))
-                    creatureCounts[type.ordinal()]++;
+                    AkarinCreatureSpanwner.increment(this.getPos(), type);
             // Akarin end
         }
         entity.setCurrentChunk(this);
@@ -807,8 +807,7 @@ public class Chunk implements IChunkAccess {
         } else if (entity instanceof IAnimal) {
             for (EnumCreatureType type : EnumCreatureType.values())
                 if (type.matches(entity)) {
-                    int typeCount = creatureCounts[type.ordinal()];
-                    creatureCounts[type.ordinal()] = typeCount > 1 ? --typeCount : 0;
+                    AkarinCreatureSpanwner.decrement(this.getPos(), type);
                 }
             // Akarin end
         }
