@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.event.entity.EntityInteractEvent; // CraftBukkit
 
 public class BlockTripwire extends Block {
@@ -141,7 +140,7 @@ public class BlockTripwire extends Block {
         if (flag != flag1 && flag1 && (Boolean)iblockdata.get(ATTACHED)) {
             org.bukkit.World bworld = world.getWorld();
             org.bukkit.plugin.PluginManager manager = world.getServer().getPluginManager();
-            org.bukkit.block.Block block = ((CraftWorld) bworld).getBlockAt(blockposition); // Akarin
+            org.bukkit.block.Block block = bworld.getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ());
             boolean allowed = false;
 
             // If all of the events are cancelled block the tripwire trigger, else allow

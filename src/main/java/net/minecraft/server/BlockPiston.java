@@ -13,8 +13,6 @@ import java.util.Iterator;
 import java.util.ListIterator;
 
 import com.google.common.collect.ImmutableList;
-
-import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.block.CraftBlock;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPistonExtendEvent;
@@ -121,7 +119,7 @@ public class BlockPiston extends BlockDirectional {
 
             // CraftBukkit start
             //if (!this.sticky) { // Paper - Prevents empty sticky pistons from firing retract - history behind is odd
-                org.bukkit.block.Block block = world.getWorld().getBlockAt(blockposition); // Akarin
+                org.bukkit.block.Block block = world.getWorld().getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ());
                 BlockPistonRetractEvent event = new BlockPistonRetractEvent(block, ImmutableList.<org.bukkit.block.Block>of(), CraftBlock.notchToBlockFace(enumdirection));
                 world.getServer().getPluginManager().callEvent(event);
 
@@ -304,7 +302,7 @@ public class BlockPiston extends BlockDirectional {
             EnumDirection enumdirection1 = flag ? enumdirection : enumdirection.opposite();
             Set<BlockPosition> set = Sets.newHashSet(list);
             // CraftBukkit start
-            final org.bukkit.block.Block bblock = world.getWorld().getBlockAt(blockposition); // Akarin
+            final org.bukkit.block.Block bblock = world.getWorld().getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ());
 
             final List<BlockPosition> moved = pistonextendschecker.getMovedBlocks();
             final List<BlockPosition> broken = pistonextendschecker.getBrokenBlocks();
@@ -322,7 +320,7 @@ public class BlockPiston extends BlockDirectional {
                         throw new ArrayIndexOutOfBoundsException(index);
                     }
                     BlockPosition pos = (BlockPosition) (index < moved.size() ? moved.get(index) : broken.get(index - moved.size()));
-                    return ((CraftWorld) bblock.getWorld()).getBlockAt(pos); // Akarin
+                    return bblock.getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ());
                 }
             };
             org.bukkit.event.block.BlockPistonEvent event;

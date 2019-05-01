@@ -216,7 +216,7 @@ public abstract class Entity implements INamableTileEntity, ICommandListener, Ke
         this.justCreated = true;
         this.uniqueID = MathHelper.a(java.util.concurrent.ThreadLocalRandom.current()); // Paper
         this.au = this.uniqueID.toString();
-        this.aJ = Collections.synchronizedSet(Sets.newHashSet()); // Akarin - synchronized to protect plugins
+        this.aJ = Sets.newHashSet();
         this.aL = new double[] { 0.0D, 0.0D, 0.0D};
         this.g = entitytypes;
         this.world = world;
@@ -257,15 +257,11 @@ public abstract class Entity implements INamableTileEntity, ICommandListener, Ke
     }
 
     public boolean addScoreboardTag(String s) {
-        synchronized (this.aJ) { // Akarin
         return this.aJ.size() >= 1024 ? false : this.aJ.add(s);
-        } // Akarin
     }
 
     public boolean removeScoreboardTag(String s) {
-        synchronized (this.aJ) { // Akarin
         return this.aJ.remove(s);
-        } // Akarin
     }
 
     public void killEntity() {
@@ -1658,7 +1654,6 @@ public abstract class Entity implements INamableTileEntity, ICommandListener, Ke
             NBTTagList nbttaglist;
             Iterator iterator;
 
-            synchronized (this.aJ) { // Akarin
             if (!this.aJ.isEmpty()) {
                 nbttaglist = new NBTTagList();
                 iterator = this.aJ.iterator();
@@ -1671,7 +1666,6 @@ public abstract class Entity implements INamableTileEntity, ICommandListener, Ke
 
                 nbttagcompound.set("Tags", nbttaglist);
             }
-            } // Akarin
 
             this.b(nbttagcompound);
             if (this.isVehicle()) {
@@ -1779,7 +1773,6 @@ public abstract class Entity implements INamableTileEntity, ICommandListener, Ke
             this.setNoGravity(nbttagcompound.getBoolean("NoGravity"));
             this.h(nbttagcompound.getBoolean("Glowing"));
             if (nbttagcompound.hasKeyOfType("Tags", 9)) {
-                synchronized (this.aJ) { // Akarin
                 this.aJ.clear();
                 NBTTagList nbttaglist3 = nbttagcompound.getList("Tags", 8);
                 int i = Math.min(nbttaglist3.size(), 1024);
@@ -1787,7 +1780,6 @@ public abstract class Entity implements INamableTileEntity, ICommandListener, Ke
                 for (int j = 0; j < i; ++j) {
                     this.aJ.add(nbttaglist3.getString(j));
                 }
-                } // Akarin
             }
 
             this.a(nbttagcompound);

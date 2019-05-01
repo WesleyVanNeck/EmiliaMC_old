@@ -430,7 +430,7 @@ public abstract class World implements IEntityAccess, GeneratorAccess, IIBlockAc
             // CraftBukkit start - capture blockstates
             CraftBlockState blockstate = null;
             if (this.captureBlockStates) {
-                blockstate = (CraftBlockState) world.getBlockAt(blockposition).getState(); // Paper - use CB getState to get a suitable snapshot // Akarin
+                blockstate = (CraftBlockState) world.getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ()).getState(); // Paper - use CB getState to get a suitable snapshot
                 this.capturedBlockStates.add(blockstate);
             }
             // CraftBukkit end
@@ -531,7 +531,7 @@ public abstract class World implements IEntityAccess, GeneratorAccess, IIBlockAc
                 iblockdata1.b(this, blockposition, j); // Don't call an event for the old block to limit event spam
                 CraftWorld world = ((WorldServer) this).getWorld();
                 if (world != null && ((WorldServer)this).hasPhysicsEvent && !io.akarin.server.core.AkarinGlobalConfig.fixPhysicsEventBehaviour) { // Paper // Akarin - fixes physics event
-                    BlockPhysicsEvent event = new BlockPhysicsEvent(world.getBlockAt(blockposition), CraftBlockData.fromData(iblockdata)); // Akarin
+                    BlockPhysicsEvent event = new BlockPhysicsEvent(world.getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ()), CraftBlockData.fromData(iblockdata));
                     this.getServer().getPluginManager().callEvent(event);
 
                     if (event.isCancelled()) {
@@ -685,7 +685,7 @@ public abstract class World implements IEntityAccess, GeneratorAccess, IIBlockAc
                 // CraftBukkit start
                 CraftWorld world = ((WorldServer) this).getWorld();
                 if (world != null && ((WorldServer)this).hasPhysicsEvent) { // Paper
-                    BlockPhysicsEvent event = new BlockPhysicsEvent(world.getBlockAt(blockposition), CraftBlockData.fromData(iblockdata), world.getBlockAt(blockposition)); // Akarin
+                    BlockPhysicsEvent event = new BlockPhysicsEvent(world.getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ()), CraftBlockData.fromData(iblockdata), world.getBlockAt(blockposition1.getX(), blockposition1.getY(), blockposition1.getZ()));
                     this.getServer().getPluginManager().callEvent(event);
 
                     if (event.isCancelled()) {

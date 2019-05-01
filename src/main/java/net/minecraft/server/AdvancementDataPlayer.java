@@ -1,6 +1,5 @@
 package net.minecraft.server;
 
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -12,18 +11,13 @@ import com.google.gson.JsonParseException;
 import com.google.gson.internal.Streams;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import com.koloboke.collect.map.hash.HashObjObjMaps;
 import com.mojang.datafixers.DataFixTypes;
 import com.mojang.datafixers.Dynamic;
 import com.mojang.datafixers.types.JsonOps;
-
-import io.akarin.server.core.AkarinAsyncExecutor;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -202,33 +196,6 @@ public class AdvancementDataPlayer {
         this.d();
     }
 
-    // Akarin start - copied from below
-    public Map<MinecraftKey, AdvancementProgress> toSerializableMap() {
-        Map<MinecraftKey, AdvancementProgress> map = HashObjObjMaps.newMutableMap();
-        Iterator<Entry<Advancement, AdvancementProgress>> iterator = this.data.entrySet().iterator();
-
-        while (iterator.hasNext()) {
-            Entry<Advancement, AdvancementProgress> entry = iterator.next();
-            AdvancementProgress advancementprogress = (AdvancementProgress) entry.getValue();
-
-            if (advancementprogress.b()) {
-                map.put(((Advancement) entry.getKey()).getName(), advancementprogress);
-            }
-        }
-        return map;
-    }
-    public void save(Map<MinecraftKey, AdvancementProgress> serializableMap) {
-        if (this.e.getParentFile() != null) {
-            this.e.getParentFile().mkdirs();
-        }
-
-        try {
-            Files.write(AdvancementDataPlayer.b.toJson(serializableMap), this.e, StandardCharsets.UTF_8);
-        } catch (IOException ioexception) {
-            AdvancementDataPlayer.a.error("Couldn't save player advancements to {}", this.e, ioexception);
-        }
-    }
-    // Akarin end
     public void c() {
         if (org.spigotmc.SpigotConfig.disableAdvancementSaving) return;
         Map<MinecraftKey, AdvancementProgress> map = Maps.newHashMap();

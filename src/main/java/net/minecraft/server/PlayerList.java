@@ -7,8 +7,6 @@ import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
 
 import io.akarin.server.core.AkarinAsyncExecutor;
-import io.akarin.server.core.AkarinAsyncScheduler;
-import io.akarin.server.core.AkarinGlobalConfig;
 import io.netty.buffer.Unpooled;
 import java.io.File;
 import java.net.SocketAddress;
@@ -345,36 +343,21 @@ public abstract class PlayerList {
         return nbttagcompound1;
     }
 
-    // Akarin start
     protected void savePlayerFile(EntityPlayer entityplayer) {
-        savePlayerFile(entityplayer, true);
-    }
-    // Akarin end
-    protected void savePlayerFile(EntityPlayer entityplayer, boolean async) {
         if (!entityplayer.getBukkitEntity().isPersistent()) return; // CraftBukkit
         entityplayer.lastSave = MinecraftServer.currentTick; // Paper
-        //this.playerFileData.save(entityplayer); // Akarin - moved down
+        this.playerFileData.save(entityplayer);
         ServerStatisticManager serverstatisticmanager = (ServerStatisticManager) entityplayer.getStatisticManager(); // CraftBukkit
 
         if (serverstatisticmanager != null) {
-            //serverstatisticmanager.a(); // Akarin - moved down
+            serverstatisticmanager.a();
         }
 
         AdvancementDataPlayer advancementdataplayer = (AdvancementDataPlayer) entityplayer.getAdvancementData(); // CraftBukkit
 
-        Map<MinecraftKey, AdvancementProgress> advancements = advancementdataplayer.toSerializableMap(); // Akarin
         if (advancementdataplayer != null) {
-            //advancementdataplayer.c(); // Akarin - moved down
+            advancementdataplayer.c();
         }
-        // Akarin start
-        AkarinAsyncExecutor.scheduleSingleAsyncTask(() -> {
-            this.playerFileData.save(entityplayer);
-            if (serverstatisticmanager != null)
-                serverstatisticmanager.a();
-            if (advancementdataplayer != null)
-                advancementdataplayer.save(advancements);
-        });
-        // Akarin end
 
     }
 
@@ -533,7 +516,7 @@ public abstract class PlayerList {
 
         for (int i = 0; i < this.players.size(); ++i) {
             entityplayer = (EntityPlayer) this.players.get(i);
-            if (AkarinUserCache.isOnlineMode() ? entityplayer.getUniqueID().equals(uuid) : entityplayer.getName().equals(gameprofile.getName())) { // Akarin - resolve offline servers
+            if (entityplayer.getUniqueID().equals(uuid)) {
                 list.add(entityplayer);
             }
         }
@@ -550,49 +533,11 @@ public abstract class PlayerList {
         // in the event, check with plugins to see if it's ok, and THEN kick
         // depending on the outcome.
         SocketAddress socketaddress = loginlistener.networkManager.getSocketAddress();
-        // Akarin start - disallow before login event
-        if (AkarinGlobalConfig.disallowBeforeLogin) {
-            if (getProfileBans().isBanned(gameprofile) && !getProfileBans().get(gameprofile).hasExpired()) {
-                GameProfileBanEntry gameprofilebanentry = (GameProfileBanEntry) this.k.get(gameprofile);
-
-                chatmessage = new ChatMessage("multiplayer.disconnect.banned.reason", new Object[] { gameprofilebanentry.getReason()});
-                if (gameprofilebanentry.getExpires() != null) {
-                    chatmessage.addSibling(new ChatMessage("multiplayer.disconnect.banned.expiration", new Object[] { PlayerList.g.format(gameprofilebanentry.getExpires())}));
-                }
-
-                // return chatmessage;
-                if (!gameprofilebanentry.hasExpired()) CraftChatMessage.fromComponent(chatmessage);
-                return null;
-            } else if (!this.isWhitelisted(gameprofile)) {
-                //chatmessage = new ChatMessage("multiplayer.disconnect.not_whitelisted", new Object[0]);
-                //event.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, org.spigotmc.SpigotConfig.whitelistMessage); // Spigot // Paper - moved to isWhitelisted
-                loginlistener.disconnect(org.spigotmc.SpigotConfig.whitelistMessage);
-            } else if (getIPBans().isBanned(socketaddress) && !getIPBans().get(socketaddress).hasExpired()) {
-                IpBanEntry ipbanentry = this.l.get(socketaddress);
-
-                chatmessage = new ChatMessage("multiplayer.disconnect.banned_ip.reason", new Object[] { ipbanentry.getReason()});
-                if (ipbanentry.getExpires() != null) {
-                    chatmessage.addSibling(new ChatMessage("multiplayer.disconnect.banned_ip.expiration", new Object[] { PlayerList.g.format(ipbanentry.getExpires())}));
-                }
-
-                // return chatmessage;
-                loginlistener.disconnect(chatmessage);
-                return null;
-            } else {
-                // return this.players.size() >= this.maxPlayers && !this.f(gameprofile) ? new ChatMessage("multiplayer.disconnect.server_full", new Object[0]) : null;
-                if (this.players.size() >= this.maxPlayers && !this.f(gameprofile)) {
-                    loginlistener.disconnect(org.spigotmc.SpigotConfig.serverFullMessage);
-                    return null;
-                }
-            }
-        }
-        // Akarin end
 
         EntityPlayer entity = new EntityPlayer(this.server, this.server.getWorldServer(DimensionManager.OVERWORLD), gameprofile, new PlayerInteractManager(this.server.getWorldServer(DimensionManager.OVERWORLD)));
         Player player = entity.getBukkitEntity();
         PlayerLoginEvent event = new PlayerLoginEvent(player, hostname, ((java.net.InetSocketAddress) socketaddress).getAddress(), ((java.net.InetSocketAddress) loginlistener.networkManager.getRawAddress()).getAddress());
 
-        if (!AkarinGlobalConfig.disallowBeforeLogin) {// Akarin - disallow before login event
         if (getProfileBans().isBanned(gameprofile) && !getProfileBans().get(gameprofile).hasExpired()) {
             GameProfileBanEntry gameprofilebanentry = (GameProfileBanEntry) this.k.get(gameprofile);
 
@@ -622,7 +567,6 @@ public abstract class PlayerList {
                 event.disallow(PlayerLoginEvent.Result.KICK_FULL, org.spigotmc.SpigotConfig.serverFullMessage); // Spigot
             }
         }
-        } // Akarin - disallow before login event
 
         cserver.getPluginManager().callEvent(event);
         if (event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
@@ -710,7 +654,6 @@ public abstract class PlayerList {
         entityplayer1.copyFrom(entityplayer, flag);
         entityplayer1.e(entityplayer.getId());
         entityplayer1.a(entityplayer.getMainHand());
-        synchronized (entityplayer.getScoreboardTags()) { // Akarin
         Iterator iterator = entityplayer.getScoreboardTags().iterator();
 
         while (iterator.hasNext()) {
@@ -718,7 +661,6 @@ public abstract class PlayerList {
 
             entityplayer1.addScoreboardTag(s);
         }
-        } // Akarin
 
         // WorldServer worldserver = this.server.getWorldServer(entityplayer.dimension);  // CraftBukkit - handled later
 
@@ -1325,19 +1267,19 @@ public abstract class PlayerList {
     }
 
     public void savePlayers(Integer interval) {
-        //MCUtil.ensureMain("Save Players", () -> { // Paper - ensure main // Akarin
+        MCUtil.ensureMain("Save Players", () -> { // Paper - ensure main
         long now = MinecraftServer.currentTick;
-        //MinecraftTimings.savePlayers.startTiming(); // Paper // Akarin
+        MinecraftTimings.savePlayers.startTimingUnsafe(); // Paper
         int numSaved = 0; // Paper
         for (int i = 0; i < this.players.size(); ++i) {
             EntityPlayer entityplayer = this.players.get(i);
             if (interval == null || now - entityplayer.lastSave >= interval) {
-                this.savePlayerFile(entityplayer, false);
+                this.savePlayerFile(entityplayer);
                 if (interval != null && ++numSaved <= com.destroystokyo.paper.PaperConfig.maxPlayerAutoSavePerTick) { break; } // Paper
             }
         }
-        //MinecraftTimings.savePlayers.stopTiming(); // Paper // Akarin
-        //return null; }); // Paper - ensure main // Akarin
+        MinecraftTimings.savePlayers.stopTimingUnsafe(); // Paper
+        return null; }); // Paper - ensure main
     }
     // Paper end
 

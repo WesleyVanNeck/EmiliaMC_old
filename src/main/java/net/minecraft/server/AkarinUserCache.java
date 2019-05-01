@@ -33,6 +33,7 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.ProfileLookupCallback;
+
 import io.akarin.server.core.AkarinAsyncExecutor;
 import io.akarin.server.core.AkarinGlobalConfig;
 import net.minecraft.server.UserCache.UserCacheEntry;
@@ -55,11 +56,11 @@ public class AkarinUserCache {
     protected final Gson gson;
     private final File userCacheFile;
     
-    protected static boolean isOnlineMode() {
+    public static boolean isOnlineMode() {
         return UserCache.isOnlineMode() || (SpigotConfig.bungee && PaperConfig.bungeeOnlineMode);
     }
 
-    private static Date createExpireDate(boolean force) {
+    public static Date createExpireDate(boolean force) {
         long now = System.currentTimeMillis();
         if (force || (now - lastWarpExpireDate) > RECREATE_DATE_INTERVAL) {
             lastWarpExpireDate = now;
@@ -73,15 +74,18 @@ public class AkarinUserCache {
         return lastExpireDate;
     }
 
-    private static boolean isExpired(UserCacheEntry entry) {
+    public static boolean isExpired(UserCacheEntry entry) {
         return System.currentTimeMillis() >= entry.getExpireDate().getTime();
     }
- 
-    private static UserCacheEntry refreshExpireDate(UserCacheEntry entry) {
+
+    public static UserCacheEntry refreshExpireDate(UserCacheEntry entry) {
         return new UserCacheEntry(entry.getProfile(), createExpireDate(true));
     }
 
-    private static GameProfile lookup(GameProfileRepository profileRepo, String username, ProfileLookupCallback callback, boolean async) {
+    public static GameProfile lookup(GameProfileRepository profileRepo, String keyUsername, ProfileLookupCallback callback, boolean async) {
+        if (!isOnlineMode())
+            callback.onProfileLookupSucceeded(new GameProfile(EntityHuman.getOfflineUUID(keyUsername.toLowerCase(Locale.ROOT)), keyUsername));
+
         GameProfile[] gameProfile = new GameProfile[1];
         ProfileLookupCallback callbackHandler = new ProfileLookupCallback() {
             @Override
@@ -96,13 +100,13 @@ public class AkarinUserCache {
             public void onProfileLookupFailed(GameProfile gameprofile, Exception ex) {
                 LOGGER.warn("Failed to lookup player {}, using local UUID.", gameprofile.getName());
                 if (async)
-                    callback.onProfileLookupSucceeded(new GameProfile(EntityHuman.getOfflineUUID(username.toLowerCase(Locale.ROOT)), username));
+                    callback.onProfileLookupSucceeded(new GameProfile(EntityHuman.getOfflineUUID(keyUsername), keyUsername));
                 else
-                    gameProfile[0] = new GameProfile(EntityHuman.getOfflineUUID(username), username);
+                    gameProfile[0] = new GameProfile(EntityHuman.getOfflineUUID(keyUsername), keyUsername);
             }
         };
 
-        Runnable find = () -> profileRepo.findProfilesByNames(new String[] { username }, Agent.MINECRAFT, callbackHandler);
+        Runnable find = () -> profileRepo.findProfilesByNames(new String[] { keyUsername }, Agent.MINECRAFT, callbackHandler);
         if (async) {
             AkarinAsyncExecutor.scheduleAsyncTask(find);
             return null;
@@ -122,15 +126,15 @@ public class AkarinUserCache {
         this.load();
     }
 
-    private GameProfile lookupAndCache(String username, ProfileLookupCallback callback, boolean async) {
-        return lookupAndCache(username, callback, createExpireDate(false), async);
+    GameProfile lookupAndCache(String keyUsername, ProfileLookupCallback callback, boolean async) {
+        return lookupAndCache(keyUsername, callback, createExpireDate(false), async);
     }
 
-    private GameProfile lookupAndCache(String username, ProfileLookupCallback callback, Date date, boolean async) {
+    GameProfile lookupAndCache(String keyUsername, ProfileLookupCallback callback, Date date, boolean async) {
         ProfileLookupCallback callbackHandler = new ProfileLookupCallback() {
             @Override
             public void onProfileLookupSucceeded(GameProfile gameprofile) {
-                profiles.put(isOnlineMode() ? username : username.toLowerCase(Locale.ROOT), new UserCacheEntry(gameprofile, date));
+                profiles.put(keyUsername, new UserCacheEntry(gameprofile, date));
                 if (async)
                     callback.onProfileLookupSucceeded(gameprofile);
                 
@@ -144,7 +148,7 @@ public class AkarinUserCache {
             }
         };
         
-        return lookup(profileHandler, username, callbackHandler, async);
+        return lookup(profileHandler, keyUsername, callbackHandler, async);
     }
     
     public GameProfile acquire(String username) {
@@ -157,21 +161,15 @@ public class AkarinUserCache {
     
     public GameProfile acquire(String username, ProfileLookupCallback callback, boolean async) {
         if (StringUtils.isBlank(username))
-            throw new UnsupportedOperationException("Blank username");
-        
-        if (!isOnlineMode()) {
-            String usernameOffline = username.toLowerCase(Locale.ROOT);
-            GameProfile offlineProfile = new GameProfile(EntityHuman.getOfflineUUID(usernameOffline), username);
-            if (async) callback.onProfileLookupSucceeded(offlineProfile);
-            return offlineProfile;
-        }
-        
-        UserCacheEntry entry = profiles.getIfPresent(username);
+            return null;
+
+        String keyUsername = isOnlineMode() ? username : username.toLowerCase(Locale.ROOT);
+        UserCacheEntry entry = profiles.getIfPresent(keyUsername);
 
         if (entry != null) {
             if (isExpired(entry)) {
-                profiles.invalidate(username);
-                return lookupAndCache(username, callback, async);
+                profiles.invalidate(keyUsername);
+                return lookupAndCache(keyUsername, callback, async);
             } else {
                 if (async) {
                     callback.onProfileLookupSucceeded(entry.getProfile());
@@ -181,9 +179,9 @@ public class AkarinUserCache {
                 }
             }
         }
-        return lookupAndCache(username, callback, async);
+        return lookupAndCache(keyUsername, callback, async);
     }
-
+    
     @Nullable
     public GameProfile peek(String username) {
         String keyUsername = isOnlineMode() ? username : username.toLowerCase(Locale.ROOT);
@@ -191,11 +189,11 @@ public class AkarinUserCache {
         return entry == null ? null : entry.getProfile();
     }
 
-    protected void offer(GameProfile profile) {
+    void offer(GameProfile profile) {
         offer(profile, createExpireDate(false));
     }
 
-    protected void offer(GameProfile profile, Date date) {
+    void offer(GameProfile profile, Date date) {
         String keyUsername = isOnlineMode() ? profile.getName() : profile.getName().toLowerCase(Locale.ROOT);
         UserCacheEntry entry = profiles.getIfPresent(keyUsername);
 
@@ -215,12 +213,12 @@ public class AkarinUserCache {
             this.save();
     }
 
-    private void offer(UserCacheEntry entry) {
+    void offer(UserCacheEntry entry) {
         if (!isExpired(entry))
             profiles.put(isOnlineMode() ? entry.getProfile().getName() : entry.getProfile().getName().toLowerCase(Locale.ROOT), entry);
     }
 
-    protected String[] usernames() {
+    String[] usernames() {
         return profiles.asMap().keySet().toArray(new String[profiles.asMap().size()]);
     }
 
@@ -246,11 +244,11 @@ public class AkarinUserCache {
         }
     }
     
-    protected void save() {
+    public void save() {
         save(true);
     }
     
-    protected void save(boolean async) {
+    public void save(boolean async) {
         Runnable save = () -> {
             String jsonString = this.gson.toJson(this.entries());
             BufferedWriter writer = null;
@@ -274,7 +272,7 @@ public class AkarinUserCache {
             save.run();
     }
 
-    protected List<UserCacheEntry> entries() {
+    List<UserCacheEntry> entries() {
         return Lists.newArrayList(profiles.asMap().values());
     }
 }

@@ -124,11 +124,6 @@ public class CraftWorld implements World {
         }
     }
 
-    // Akarin start
-    public Block getBlockAt(BlockPosition blockPosition) {
-        return CraftBlock.at(world, blockPosition);
-    }
-    // Akarin end
     public Block getBlockAt(int x, int y, int z) {
         return CraftBlock.at(world, new BlockPosition(x, y, z));
     }

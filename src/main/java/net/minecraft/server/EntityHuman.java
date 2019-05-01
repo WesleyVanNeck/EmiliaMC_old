@@ -1410,7 +1410,7 @@ public abstract class EntityHuman extends EntityLiving {
             org.bukkit.block.Block bed;
             BlockPosition blockposition = this.bedPosition;
             if (blockposition != null) {
-                bed = this.world.getWorld().getBlockAt(blockposition); // Akarin
+                bed = this.world.getWorld().getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ());
             } else {
                 bed = this.world.getWorld().getBlockAt(player.getLocation());
             }

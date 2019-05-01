@@ -36,7 +36,7 @@ public class BlockRedstoneOre extends Block {
                 super.stepOn(world, blockposition, entity);
             }
         } else {
-            EntityInteractEvent event = new EntityInteractEvent(entity.getBukkitEntity(), world.getWorld().getBlockAt(blockposition)); // Akarin
+            EntityInteractEvent event = new EntityInteractEvent(entity.getBukkitEntity(), world.getWorld().getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ()));
             world.getServer().getPluginManager().callEvent(event);
             if (!event.isCancelled()) {
                 interact(world.getType(blockposition), world, blockposition, entity); // add entity
